@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+/* ===== CSS VARIABLES ===== */
+:root {
+  --background: #FAFAF9;
+  --foreground: #1C1917;
+  --card: #FFFFFF;
+  --card-foreground: #1C1917;
+  --muted: #F5F5F4;
+  --muted-foreground: #78716C;
+  --border: #E7E5E4;
+  --accent: #6D5ACD;
+  --accent-light: rgba(109,90,205,0.1);
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC2626;
+  --success: #16A34A;
+  --warning: #D97706;
+  --info: #2563EB;
+  --radius: 10px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 68px;
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms cubic-bezier(.4,0,.2,1);
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+.dark {
+  --background: #0C0A09;
+  --foreground: #FAFAF9;
+  --card: #1C1917;
+  --card-foreground: #FAFAF9;
+  --muted: #292524;
+  --muted-foreground: #A8A29E;
+  --border: #292524;
+  --accent-light: rgba(109,90,205,0.15);
+}
+
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  transition: background-color .3s, color .3s;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  font-family: var(--font-body);
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
+h1,h2,h3,h4,h5,h6 { font-family: var(--font-display); font-weight: 600; }
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: var(--font-body); border: none; background: none; color: inherit; }
+input, textarea, select {
+  font-family: var(--font-body);
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.875rem;
+  outline: none;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(109,90,205,0.4);
+}
+input::placeholder, textarea::placeholder { color: var(--muted-foreground); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ===== LAYOUT ===== */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: var(--sidebar-width);
+  background: var(--card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: width var(--transition-normal);
+  overflow: hidden;
+}
+.sidebar.collapsed { width: var(--sidebar-collapsed); }
+.sidebar-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: var(--radius);
+  margin: var(--space-4);
+  transition: background var(--transition-fast);
+}
+.sidebar-toggle:hover { background: var(--muted); }
+.sidebar-nav { flex: 1; padding: var(--space-2) var(--space-2); display: flex; flex-direction: column; gap: var(--space-1); }
+.nav-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  font-size: 0.9rem; font-weight: 500;
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+.nav-item:hover { background: var(--muted); }
+.nav-item.active { background: var(--accent-light); border-left-color: var(--accent); color: var(--accent); }
+.nav-item span { opacity: 1; transition: opacity var(--transition-normal); }
+.sidebar.collapsed .nav-item span { opacity: 0; pointer-events: none; }
+.nav-item i { flex-shrink: 0; width: 20px; height: 20px; }
+.sidebar-bottom {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: var(--space-3);
+}
+.sidebar.collapsed .sidebar-bottom span,
+.sidebar.collapsed .sidebar-bottom .theme-toggle-label { opacity: 0; pointer-events: none; }
+.avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent-foreground);
+  font-weight: 600; font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.main-content {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  min-height: 100vh;
+  transition: margin-left var(--transition-normal);
+  padding: var(--space-6) clamp(var(--space-4), 3vw, var(--space-8));
+}
+.sidebar.collapsed ~ .main-content { margin-left: var(--sidebar-collapsed); }
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--space-8);
+  flex-wrap: wrap; gap: var(--space-4);
+}
+.greeting h1 { font-size: 1.5rem; margin-bottom: var(--space-1); }
+.greeting p { color: var(--muted-foreground); font-size: 0.875rem; }
+.top-actions { display: flex; gap: var(--space-2); align-items: center; }
+.page-content { animation: fadeSlideIn 300ms ease forwards; }
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== COMPONENTS ===== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  transition: box-shadow .2s, transform .2s;
+}
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  transform: translateY(-2px);
+}
+.card-no-hover { transition: none; }
+.card-no-hover:hover { transform: none; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  font-size: 0.875rem; font-weight: 500;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: var(--accent-foreground); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-secondary { background: transparent; border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--muted); }
+.btn-destructive { background: var(--destructive); color: #fff; }
+.btn-destructive:hover { opacity: 0.9; }
+.btn-icon {
+  width: 36px; height: 36px; padding: 0;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-icon:hover { background: var(--muted); }
+.btn-fab {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--accent); color: var(--accent-foreground);
+  box-shadow: 0 4px 12px rgba(109,90,205,.3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+.btn-fab:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(109,90,205,.4); }
+
+/* Badge */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 0.7rem; font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.badge-count {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 150ms ease;
+}
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  padding: var(--space-6);
+  width: min(480px, 90vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: modalSlideUp 250ms ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal h2 { margin-bottom: var(--space-4); font-size: 1.1rem; }
+.modal-actions { display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-4); }
+.form-group { margin-bottom: var(--space-4); }
+.form-group label { display: block; font-size: 0.8rem; font-weight: 500; margin-bottom: var(--space-1); color: var(--muted-foreground); }
+.form-group input, .form-group textarea, .form-group select { width: 100%; }
+
+/* Toast */
+.toast-container {
+  position: fixed; top: var(--space-4); right: var(--space-4);
+  z-index: 2000;
+  display: flex; flex-direction: column; gap: var(--space-2);
+}
+.toast {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+  min-width: 280px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  animation: toastSlideIn 300ms cubic-bezier(.34,1.56,.64,1);
+  position: relative;
+  overflow: hidden;
+}
+.toast.removing { animation: toastSlideOut 200ms ease forwards; }
+@keyframes toastSlideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes toastSlideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(110%); opacity: 0; } }
+.toast-progress {
+  position: absolute; bottom: 0; left: 0; height: 3px;
+  animation: shrink 3s linear forwards;
+}
+@keyframes shrink { from { width: 100%; } to { width: 0; } }
+.toast-success .toast-progress { background: var(--success); }
+.toast-error .toast-progress { background: var(--destructive); }
+.toast-info .toast-progress { background: var(--info); }
+.toast-message { font-size: 0.85rem; font-weight: 500; }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6); }
+.stat-card { text-align: center; padding: var(--space-6) var(--space-4); }
+.stat-card .stat-value { font-family: var(--font-display); font-size: 2rem; font-weight: 700; }
+.stat-card .stat-label { font-size: 0.8rem; color: var(--muted-foreground); margin-top: var(--space-1); }
+.stat-card.danger .stat-value { color: var(--destructive); }
+
+/* Links grid */
+.links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-4); }
+.link-card {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+.link-card-inner { display: flex; padding: var(--space-4); padding-left: calc(var(--space-4) + 4px); }
+.link-accent {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px;
+  transition: width var(--transition-fast);
+}
+.link-card:hover .link-accent { width: 6px; }
+.link-card-content { flex: 1; min-width: 0; }
+.link-card-title { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.link-card-desc {
+  font-size: 0.8rem; color: var(--muted-foreground); margin-top: var(--space-1);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.link-card-icon { margin-right: var(--space-3); flex-shrink: 0; color: var(--muted-foreground); }
+.link-external { position: absolute; top: var(--space-2); right: var(--space-2); color: var(--muted-foreground); opacity: 0.5; }
+.link-card-actions {
+  position: absolute; top: var(--space-2); right: var(--space-6);
+  opacity: 0; transition: opacity var(--transition-fast);
+}
+.link-card:hover .link-card-actions { opacity: 1; }
+.category-header {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin: var(--space-6) 0 var(--space-3);
+  cursor: pointer; user-select: none;
+}
+.category-header h3 { font-size: 0.95rem; }
+.category-header i { transition: transform var(--transition-fast); }
+.category-header.collapsed i { transform: rotate(-90deg); }
+
+/* Todos */
+.todo-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+  animation: slideUp 300ms ease forwards;
+}
+.todo-item:hover { background: var(--muted); }
+.todo-item.completed .todo-text { text-decoration: line-through; opacity: 0.5; }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.todo-checkbox {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+.todo-checkbox:hover { border-color: var(--accent); }
+.todo-checkbox.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.todo-checkbox.checked svg { stroke: var(--accent-foreground); }
+.todo-text { flex: 1; font-size: 0.9rem; min-width: 0; }
+.todo-text-input {
+  flex: 1; border: none; background: transparent;
+  font-size: 0.9rem; padding: 0;
+}
+.todo-text-input:focus { box-shadow: none; }
+.todo-tags { display: flex; gap: var(--space-1); flex-wrap: wrap; }
+.todo-meta { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.priority-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.priority-high { background: var(--destructive); }
+.priority-medium { background: var(--warning); }
+.priority-low { background: var(--success); }
+.due-chip {
+  font-size: 0.7rem; padding: 2px 8px;
+  background: var(--muted); border-radius: 9999px;
+  color: var(--muted-foreground);
+}
+.due-chip.overdue { background: rgba(220,38,38,.1); color: var(--destructive); }
+.drag-handle {
+  cursor: grab; color: var(--muted-foreground); opacity: 0.4;
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+.todo-item:hover .drag-handle { opacity: 1; }
+.todo-separator {
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.quick-add-bar {
+  display: flex; gap: var(--space-2); align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 2px solid var(--border);
+  flex-wrap: wrap;
+}
+.quick-add-bar input[type="text"] { flex: 1; min-width: 150px; }
+.filter-bar {
+  display: flex; gap: var(--space-2); align-items: center;
+  padding: var(--space-3) 0;
+  overflow-x: auto;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+.filter-pill {
+  padding: var(--space-1) var(--space-3);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.filter-pill:hover { background: var(--muted); }
+.filter-pill.active { background: var(--accent); color: var(--accent-foreground); border-color: var(--accent); }
+
+/* Settings */
+.settings-section { margin-bottom: var(--space-8); }
+.settings-section h3 { font-size: 1rem; margin-bottom: var(--space-4); }
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.setting-row label { font-size: 0.9rem; }
+.color-swatches { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.color-swatch {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+.color-swatch:hover { transform: scale(1.1); }
+.color-swatch.active { border-color: var(--foreground); box-shadow: 0 0 0 2px var(--background); }
+
+/* Quick add strip */
+.quick-strip { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-6); }
+.quick-strip .card { padding: var(--space-4); }
+.quick-strip h4 { font-size: 0.85rem; margin-bottom: var(--space-3); color: var(--muted-foreground); }
+.quick-strip input { width: 100%; margin-bottom: var(--space-2); }
+
+/* Pinned links */
+.pinned-grid { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.pinned-tile {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  width: 72px;
+  text-align: center;
+}
+.pinned-tile:hover { background: var(--muted); }
+.pinned-tile-icon {
+  width: 40px; height: 40px;
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+}
+.pinned-tile span { font-size: 0.65rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70px; }
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 44px; height: 24px;
+  background: var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.toggle.on { background: var(--accent); }
+.toggle-knob {
+  position: absolute; top: 2px; left: 2px;
+  width: 20px; height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+}
+.toggle.on .toggle-knob { transform: translateX(20px); }
+
+/* Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--muted) 25%, var(--border) 50%, var(--muted) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* SortableJS drag */
+.sortable-ghost { opacity: 0.4; }
+.sortable-drag { transform: rotate(2deg); box-shadow: 0 8px 25px rgba(0,0,0,.2) !important; }
+.sortable-chosen { cursor: grabbing; }
+
+/* Focus visible */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 200;
+  }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .sidebar.collapsed { transform: translateX(-100%); }
+  .main-content, .sidebar.collapsed ~ .main-content { margin-left: 0; }
+  .mobile-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 150;
+  }
+  .mobile-menu-btn { display: flex !important; }
+  .quick-strip { grid-template-columns: 1fr; }
+}
+@media (min-width: 769px) {
+  .mobile-menu-btn { display: none !important; }
+}
+
+/* ===== TAG COLORS ===== */
+.tag-0 { background: #DBEAFE; color: #1E40AF; }
+.tag-1 { background: #FEE2E2; color: #991B1B; }
+.tag-2 { background: #D1FAE5; color: #065F46; }
+.tag-3 { background: #FEF3C7; color: #92400E; }
+.tag-4 { background: #E0E7FF; color: #3730A3; }
+.tag-5 { background: #FCE7F3; color: #9D174D; }
+.tag-6 { background: #CCFBF1; color: #115E59; }
+.tag-7 { background: #F3E8FF; color: #6B21A8; }
+
+/* color picker */
+.color-picker-mini { display: flex; gap: 4px; flex-wrap: wrap; margin-top: var(--space-2); }
+.color-dot {
+  width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform var(--transition-fast);
+}
+.color-dot:hover { transform: scale(1.15); }
+.color-dot.selected { border-color: var(--foreground); }
+
+.section-title { font-size: 1rem; margin-bottom: var(--space-4); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-6 { margin-bottom: var(--space-6); }
+.flex-gap-2 { display: flex; gap: var(--space-2); align-items: center; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+    <i data-lucide="panel-left-close" width="20" height="20"></i>
+  </button>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-page="dashboard">
+      <i data-lucide="layout-dashboard" width="20" height="20"></i>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" data-page="links">
+      <i data-lucide="link" width="20" height="20"></i>
+      <span>Links</span>
+    </div>
+    <div class="nav-item" data-page="todos">
+      <i data-lucide="check-square" width="20" height="20"></i>
+      <span>Todos</span>
+    </div>
+    <div class="nav-item" data-page="settings">
+      <i data-lucide="settings" width="20" height="20"></i>
+      <span>Settings</span>
+    </div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="avatar" id="avatarEl">S</div>
+    <span id="usernameDisplay" style="font-size:0.85rem;font-weight:500;">Seken</span>
+    <button class="btn-icon" id="themeToggleBtn" aria-label="Toggle theme" style="margin-left:auto;">
+      <i data-lucide="moon" width="18" height="18" id="themeIcon"></i>
+    </button>
+  </div>
+</aside>
+
+<!-- Mobile overlay -->
+<div class="mobile-overlay" id="mobileOverlay" style="display:none;" onclick="toggleMobileSidebar()"></div>
+
+<!-- Main -->
+<main class="main-content" id="mainContent">
+  <div class="top-bar">
+    <div style="display:flex;align-items:center;gap:var(--space-3);">
+      <button class="btn-icon mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Menu">
+        <i data-lucide="menu" width="20" height="20"></i>
+      </button>
+      <div class="greeting">
+        <h1 id="greetingText">Good morning, Seken</h1>
+        <p id="dateTimeText"></p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn-fab" id="quickAddBtn" aria-label="Quick add">
+        <i data-lucide="plus" width="22" height="22"></i>
+      </button>
+    </div>
+  </div>
+  <div id="pageContent" class="page-content"></div>
+</main>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ===== STATE MANAGEMENT ===== */
+const LS = {
+  get(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } },
+  set(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+};
+
+let _saveTimer = null;
+function debounceSave(key, data) {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => LS.set(key, data), 150);
+}
+
+function uuid() { return crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2, 11) + Date.now().toString(36); }
+
+const STATE = {
+  links: LS.get('dashboard_links', []),
+  todos: LS.get('dashboard_todos', []),
+  tagColors: LS.get('dashboard_tag_colors', {}),
+  settings: LS.get('dashboard_settings', { theme: 'light', accent: '#6D5ACD', username: 'Seken' }),
+  currentPage: 'dashboard',
+  sidebarCollapsed: LS.get('dashboard_sidebar_collapsed', false),
+  collapsedCategories: LS.get('dashboard_collapsed_cats', {}),
+  todoFilters: { tag: null, priority: null, status: null, due: null }
+};
+
+function saveLinks() { debounceSave('dashboard_links', STATE.links); }
+function saveTodos() { debounceSave('dashboard_todos', STATE.todos); }
+function saveTagColors() { debounceSave('dashboard_tag_colors', STATE.tagColors); }
+function saveSettings() { debounceSave('dashboard_settings', STATE.settings); }
+
+const TAG_CLASSES = ['tag-0','tag-1','tag-2','tag-3','tag-4','tag-5','tag-6','tag-7'];
+function getTagClass(tag) {
+  if (!STATE.tagColors[tag] && STATE.tagColors[tag] !== 0) {
+    STATE.tagColors[tag] = Object.keys(STATE.tagColors).length % TAG_CLASSES.length;
+    saveTagColors();
+  }
+  return TAG_CLASSES[STATE.tagColors[tag]];
+}
+
+const LINK_COLORS = ['#6D5ACD','#DC2626','#16A34A','#D97706','#2563EB','#DB2777','#0891B2','#7C3AED','#EA580C','#059669'];
+
+/* ===== THEME ===== */
+function applyTheme() {
+  const dark = STATE.settings.theme === 'dark';
+  document.documentElement.classList.toggle('dark', dark);
+  const icon = document.getElementById('themeIcon');
+  if (icon) icon.setAttribute('data-lucide', dark ? 'sun' : 'moon');
+  document.documentElement.style.setProperty('--accent', STATE.settings.accent);
+  lucide.createIcons();
+}
+
+/* ===== GREETING ===== */
+function updateGreeting() {
+  const h = new Date().getHours();
+  let g = 'Good evening';
+  if (h < 12) g = 'Good morning';
+  else if (h < 17) g = 'Good afternoon';
+  const el = document.getElementById('greetingText');
+  if (el) el.textContent = g + ', ' + STATE.settings.username;
+}
+function updateDateTime() {
+  const el = document.getElementById('dateTimeText');
+  if (el) el.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + ' \u2022 ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+/* ===== TOAST ===== */
+function showToast(message, type = 'info', action = null) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.innerHTML = '<div class="toast-message">' + message + (action ? ' <button class="btn btn-secondary" style="font-size:0.75rem;padding:2px 8px;margin-left:8px;" onclick="(' + action.toString() + ')();this.closest(\'.toast\').remove();">' + (action.label || 'Undo') + '</button>' : '') + '</div><div class="toast-progress"></div>';
+  c.appendChild(t);
+  setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 200); }, 3000);
+}
+
+/* ===== MODAL ===== */
+function openModal(html) {
+  closeModal();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'modalOverlay';
+  overlay.innerHTML = '<div class="modal" onclick="event.stopPropagation()">' + html + '</div>';
+  overlay.addEventListener('click', closeModal);
+  document.body.appendChild(overlay);
+  const firstInput = overlay.querySelector('input, textarea, select');
+  if (firstInput) setTimeout(() => firstInput.focus(), 50);
+  // Focus trap
+  overlay.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeModal(); return; }
+    if (e.key !== 'Tab') return;
+    const focusable = overlay.querySelectorAll('input,button,select,textarea,[tabindex]:not([tabindex="-1"])');
+    if (focusable.length === 0) return;
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+}
+function closeModal() {
+  const m = document.getElementById('modalOverlay');
+  if (m) m.remove();
+}
+
+/* ===== QUICK ADD MENU ===== */
+function showQuickAddMenu() {
+  openModal(
+    '<h2>Quick Add</h2>' +
+    '<div style="display:flex;gap:var(--space-3);">' +
+    '<button class="btn btn-primary" style="flex:1;" onclick="closeModal();openAddLinkModal()"><i data-lucide="link" width="16" height="16"></i> New Link</button>' +
+    '<button class="btn btn-primary" style="flex:1;" onclick="closeModal();navigateTo(\'todos\');setTimeout(()=>{const i=document.getElementById(\'todoQuickInput\');if(i)i.focus();},100)"><i data-lucide="check-square" width="16" height="16"></i> New Todo</button>' +
+    '</div>'
+  );
+  lucide.createIcons();
+}
+
+/* ===== ROUTER ===== */
+function navigateTo(page) {
+  STATE.currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+  renderPage();
+  if (window.innerWidth < 769) toggleMobileSidebar(false);
+}
+
+function renderPage() {
+  const el = document.getElementById('pageContent');
+  el.style.animation = 'none';
+  el.offsetHeight; // reflow
+  el.style.animation = 'fadeSlideIn 300ms ease forwards';
+  switch (STATE.currentPage) {
+    case 'dashboard': el.innerHTML = renderDashboard(); break;
+    case 'links': el.innerHTML = renderLinks(); break;
+    case 'todos': el.innerHTML = renderTodos(); break;
+    case 'settings': el.innerHTML = renderSettings(); break;
+  }
+  lucide.createIcons();
+  if (STATE.currentPage === 'todos') initTodoSortable();
+  if (STATE.currentPage === 'links') initLinkSortable();
+}
+
+/* ===== DASHBOARD VIEW ===== */
+function renderDashboard() {
+  const totalLinks = STATE.links.length;
+  const openTodos = STATE.todos.filter(t => !t.completed).length;
+  const today = new Date().toDateString();
+  const completedToday = STATE.todos.filter(t => t.completed && t.completedAt && new Date(t.completedAt).toDateString() === today).length;
+  const overdue = STATE.todos.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) < new Date(new Date().toDateString())).length;
+  const recent = [...STATE.todos].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+  const pinned = STATE.links.slice(0, 6);
+
+  return '<div class="stats-grid">' +
+    statCard('Total Links', totalLinks, 'link') +
+    statCard('Open Todos', openTodos, 'list-todo') +
+    statCard('Done Today', completedToday, 'check-circle') +
+    statCard('Overdue', overdue, 'alert-circle', overdue > 0) +
+    '</div>' +
+    '<h3 class="section-title">Recent Todos</h3>' +
+    '<div class="card card-no-hover mb-6" style="padding:0;overflow:hidden;">' +
+    (recent.length ? recent.map(t => renderTodoItem(t)).join('') : '<p style="padding:var(--space-4);color:var(--muted-foreground);font-size:0.85rem;">No todos yet</p>') +
+    '</div>' +
+    '<h3 class="section-title">Quick Links</h3>' +
+    (pinned.length ? '<div class="pinned-grid mb-6">' + pinned.map(l =>
+      '<div class="pinned-tile" onclick="window.open(\'' + escHtml(l.url) + '\',\'_blank\')">' +
+      '<div class="pinned-tile-icon" style="background:' + (l.color || 'var(--accent)') + '20;color:' + (l.color || 'var(--accent)') + '"><i data-lucide="' + (l.icon || 'globe') + '" width="20" height="20"></i></div>' +
+      '<span>' + escHtml(l.title) + '</span></div>'
+    ).join('') + '</div>' : '<p style="color:var(--muted-foreground);font-size:0.85rem;" class="mb-6">No links yet</p>') +
+    '<h3 class="section-title">Quick Add</h3>' +
+    '<div class="quick-strip">' +
+    '<div class="card card-no-hover"><h4><i data-lucide="link" width="14" height="14" style="display:inline;vertical-align:middle;margin-right:4px;"></i> Add Link</h4>' +
+    '<input type="text" id="dashQuickUrl" placeholder="Paste URL...">' +
+    '<input type="text" id="dashQuickTitle" placeholder="Title">' +
+    '<button class="btn btn-primary" style="width:100%;margin-top:var(--space-2);" onclick="dashQuickAddLink()">Add Link</button></div>' +
+    '<div class="card card-no-hover"><h4><i data-lucide="check-square" width="14" height="14" style="display:inline;vertical-align:middle;margin-right:4px;"></i> Add Todo</h4>' +
+    '<input type="text" id="dashQuickTodo" placeholder="What needs to be done?">' +
+    '<button class="btn btn-primary" style="width:100%;margin-top:var(--space-2);" onclick="dashQuickAddTodo()">Add Todo</button></div>' +
+    '</div>';
+}
+
+function statCard(label, value, icon, danger = false) {
+  return '<div class="card stat-card' + (danger ? ' danger' : '') + '">' +
+    '<i data-lucide="' + icon + '" width="24" height="24" style="color:var(--muted-foreground);margin-bottom:var(--space-2);"></i>' +
+    '<div class="stat-value">' + value + '</div>' +
+    '<div class="stat-label">' + label + '</div></div>';
+}
+
+function dashQuickAddLink() {
+  const url = document.getElementById('dashQuickUrl').value.trim();
+  const title = document.getElementById('dashQuickTitle').value.trim();
+  if (!url) return showToast('URL is required', 'error');
+  STATE.links.unshift({ id: uuid(), title: title || url, url, description: '', icon: 'globe', category: '', color: LINK_COLORS[STATE.links.length % LINK_COLORS.length], createdAt: new Date().toISOString() });
+  saveLinks();
+  showToast('Link added!', 'success');
+  renderPage();
+}
+
+function dashQuickAddTodo() {
+  const text = document.getElementById('dashQuickTodo').value.trim();
+  if (!text) return;
+  STATE.todos.unshift({ id: uuid(), text, completed: false, tags: [], priority: 'medium', dueDate: null, createdAt: new Date().toISOString(), completedAt: null, order: 0 });
+  saveTodos();
+  showToast('Todo added!', 'success');
+  renderPage();
+}
+
+/* ===== LINKS VIEW ===== */
+function renderLinks() {
+  const cats = {};
+  STATE.links.forEach(l => {
+    const c = l.category || 'Uncategorized';
+    if (!cats[c]) cats[c] = [];
+    cats[c].push(l);
+  });
+
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">' +
+    '<h2 style="font-size:1.25rem;">Links</h2>' +
+    '<button class="btn btn-primary" onclick="openAddLinkModal()"><i data-lucide="plus" width="16" height="16"></i> Add Link</button></div>';
+
+  if (STATE.links.length === 0) {
+    html += '<div class="card card-no-hover" style="text-align:center;padding:var(--space-8);"><p style="color:var(--muted-foreground);">No links yet. Add your first link!</p></div>';
+    return html;
+  }
+
+  Object.keys(cats).sort().forEach(cat => {
+    const collapsed = STATE.collapsedCategories[cat];
+    html += '<div class="category-header' + (collapsed ? ' collapsed' : '') + '" onclick="toggleCategory(\'' + escAttr(cat) + '\')">' +
+      '<i data-lucide="chevron-down" width="16" height="16"></i>' +
+      '<h3>' + escHtml(cat) + '</h3>' +
+      '<span class="badge badge-count">' + cats[cat].length + '</span></div>';
+    if (!collapsed) {
+      html += '<div class="links-grid" data-category="' + escAttr(cat) + '">';
+      cats[cat].forEach(l => {
+        html += '<div class="card link-card" data-id="' + l.id + '" onclick="window.open(\'' + escAttr(l.url) + '\',\'_blank\')">' +
+          '<div class="link-accent" style="background:' + (l.color || 'var(--accent)') + ';"></div>' +
+          '<div class="link-card-inner">' +
+          '<div class="link-card-icon"><i data-lucide="' + (l.icon || 'globe') + '" width="20" height="20"></i></div>' +
+          '<div class="link-card-content">' +
+          '<div class="link-card-title">' + escHtml(l.title) + '</div>' +
+          '<div class="link-card-desc">' + escHtml(l.description || '') + '</div>' +
+          '</div></div>' +
+          '<div class="link-external"><i data-lucide="external-link" width="14" height="14"></i></div>' +
+          '<div class="link-card-actions"><button class="btn-icon" onclick="event.stopPropagation();openEditLinkModal(\'' + l.id + '\')" aria-label="Edit link"><i data-lucide="more-horizontal" width="16" height="16"></i></button></div>' +
+          '</div>';
+      });
+      html += '</div>';
+    }
+  });
+  return html;
+}
+
+function toggleCategory(cat) {
+  STATE.collapsedCategories[cat] = !STATE.collapsedCategories[cat];
+  LS.set('dashboard_collapsed_cats', STATE.collapsedCategories);
+  renderPage();
+}
+
+function openAddLinkModal(existing = null) {
+  const l = existing || { url: '', title: '', description: '', icon: 'globe', category: '', color: LINK_COLORS[0] };
+  const cats = [...new Set(STATE.links.map(x => x.category).filter(Boolean))];
+  const catOptions = cats.map(c => '<option value="' + escAttr(c) + '"' + (c === l.category ? ' selected' : '') + '>' + escHtml(c) + '</option>').join('');
+  const colorDots = LINK_COLORS.map(c => '<div class="color-dot' + (c === l.color ? ' selected' : '') + '" style="background:' + c + ';" data-color="' + c + '" onclick="document.querySelectorAll(\'.color-dot\').forEach(d=>d.classList.remove(\'selected\'));this.classList.add(\'selected\');document.getElementById(\'linkColor\').value=this.dataset.color;"></div>').join('');
+
+  openModal(
+    '<h2>' + (existing ? 'Edit Link' : 'Add Link') + '</h2>' +
+    '<div class="form-group"><label>URL *</label><input type="url" id="linkUrl" value="' + escAttr(l.url) + '" placeholder="https://..." required></div>' +
+    '<div class="form-group"><label>Title</label><input type="text" id="linkTitle" value="' + escAttr(l.title) + '" placeholder="Site name"></div>' +
+    '<div class="form-group"><label>Description</label><textarea id="linkDesc" rows="2" placeholder="Brief description">' + escHtml(l.description || '') + '</textarea></div>' +
+    '<div class="form-group"><label>Category</label><select id="linkCategory"><option value="">Uncategorized</option>' + catOptions + '<option value="__new">+ New category...</option></select></div>' +
+    '<div class="form-group" id="newCatGroup" style="display:none;"><label>New Category</label><input type="text" id="newCatInput" placeholder="Category name"></div>' +
+    '<div class="form-group"><label>Icon (Lucide name)</label><input type="text" id="linkIcon" value="' + escAttr(l.icon || 'globe') + '" placeholder="globe, github, code..."></div>' +
+    '<div class="form-group"><label>Color</label><input type="hidden" id="linkColor" value="' + (l.color || LINK_COLORS[0]) + '"><div class="color-picker-mini">' + colorDots + '</div></div>' +
+    '<div class="modal-actions">' +
+    (existing ? '<button class="btn btn-destructive" onclick="deleteLink(\'' + existing.id + '\')">Delete</button>' : '') +
+    '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" onclick="saveLink(' + (existing ? '\'' + existing.id + '\'' : 'null') + ')">Save</button></div>'
+  );
+
+  document.getElementById('linkCategory').addEventListener('change', function() {
+    document.getElementById('newCatGroup').style.display = this.value === '__new' ? 'block' : 'none';
+  });
+
+  // Fast flow: paste URL, tab, type title, enter to save
+  document.getElementById('linkTitle').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); saveLink(existing ? existing.id : null); }
+  });
+  document.getElementById('linkUrl').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('linkTitle').focus(); }
+  });
+  lucide.createIcons();
+}
+
+function saveLink(editId) {
+  const url = document.getElementById('linkUrl').value.trim();
+  if (!url) return showToast('URL is required', 'error');
+  const title = document.getElementById('linkTitle').value.trim() || url;
+  const desc = document.getElementById('linkDesc').value.trim();
+  let cat = document.getElementById('linkCategory').value;
+  if (cat === '__new') cat = document.getElementById('newCatInput').value.trim();
+  const icon = document.getElementById('linkIcon').value.trim() || 'globe';
+  const color = document.getElementById('linkColor').value;
+
+  if (editId) {
+    const idx = STATE.links.findIndex(l => l.id === editId);
+    if (idx >= 0) Object.assign(STATE.links[idx], { url, title, description: desc, category: cat, icon, color });
+  } else {
+    STATE.links.push({ id: uuid(), title, url, description: desc, icon, category: cat, color, createdAt: new Date().toISOString() });
+  }
+  saveLinks();
+  closeModal();
+  showToast(editId ? 'Link updated' : 'Link added!', 'success');
+  renderPage();
+}
+
+function openEditLinkModal(id) {
+  const l = STATE.links.find(x => x.id === id);
+  if (l) openAddLinkModal(l);
+}
+
+function deleteLink(id) {
+  const removed = STATE.links.find(l => l.id === id);
+  STATE.links = STATE.links.filter(l => l.id !== id);
+  saveLinks();
+  closeModal();
+  showToast('Link deleted', 'error', Object.assign(() => { STATE.links.push(removed); saveLinks(); renderPage(); }, { label: 'Undo' }));
+  renderPage();
+}
+
+function initLinkSortable() {
+  document.querySelectorAll('.links-grid').forEach(grid => {
+    new Sortable(grid, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      dragClass: 'sortable-drag',
+      handle: '.link-card',
+      onEnd: () => {
+        // Reorder STATE.links based on DOM
+        const allIds = [];
+        document.querySelectorAll('.link-card').forEach(c => allIds.push(c.dataset.id));
+        const ordered = [];
+        allIds.forEach(id => { const l = STATE.links.find(x => x.id === id); if (l) ordered.push(l); });
+        STATE.links.forEach(l => { if (!allIds.includes(l.id)) ordered.push(l); });
+        STATE.links = ordered;
+        saveLinks();
+      }
+    });
+  });
+}
+
+/* ===== TODOS VIEW ===== */
+function renderTodos() {
+  const allTags = [...new Set(STATE.todos.flatMap(t => t.tags || []))];
+  const f = STATE.todoFilters;
+
+  let filtered = STATE.todos.filter(t => {
+    if (f.tag && !(t.tags || []).includes(f.tag)) return false;
+    if (f.priority && t.priority !== f.priority) return false;
+    if (f.status === 'active' && t.completed) return false;
+    if (f.status === 'completed' && !t.completed) return false;
+    if (f.due === 'overdue' && (!t.dueDate || t.completed || new Date(t.dueDate) >= new Date(new Date().toDateString()))) return false;
+    if (f.due === 'today' && (!t.dueDate || new Date(t.dueDate).toDateString() !== new Date().toDateString())) return false;
+    if (f.due === 'upcoming' && (!t.dueDate || new Date(t.dueDate) <= new Date())) return false;
+    return true;
+  });
+
+  const active = filtered.filter(t => !t.completed);
+  const completed = filtered.filter(t => t.completed);
+
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">' +
+    '<h2 style="font-size:1.25rem;">Todos</h2></div>';
+
+  // Filter bar
+  html += '<div class="filter-bar">' +
+    filterPill('All', !f.tag && !f.priority && !f.status && !f.due, 'resetFilters()') +
+    allTags.map(tag => filterPill(tag, f.tag === tag, 'toggleTagFilter(\'' + escAttr(tag) + '\')', getTagClass(tag))).join('') +
+    '<span style="width:1px;height:20px;background:var(--border);margin:0 4px;"></span>' +
+    filterPill('High', f.priority === 'high', 'togglePriorityFilter(\'high\')') +
+    filterPill('Medium', f.priority === 'medium', 'togglePriorityFilter(\'medium\')') +
+    filterPill('Low', f.priority === 'low', 'togglePriorityFilter(\'low\')') +
+    '<span style="width:1px;height:20px;background:var(--border);margin:0 4px;"></span>' +
+    filterPill('Active', f.status === 'active', 'toggleStatusFilter(\'active\')') +
+    filterPill('Done', f.status === 'completed', 'toggleStatusFilter(\'completed\')') +
+    filterPill('Overdue', f.due === 'overdue', 'toggleDueFilter(\'overdue\')') +
+    filterPill('Today', f.due === 'today', 'toggleDueFilter(\'today\')') +
+    '</div>';
+
+  // Quick add
+  html += '<div class="card card-no-hover" style="padding:0;overflow:hidden;margin-bottom:var(--space-4);">' +
+    '<div class="quick-add-bar">' +
+    '<input type="text" id="todoQuickInput" placeholder="Add a new todo..." onkeydown="if(event.key===\'Enter\')quickAddTodo()">' +
+    '<input type="text" id="todoQuickTags" placeholder="Tags (comma separated)" style="max-width:180px;">' +
+    '<select id="todoQuickPriority" style="max-width:110px;"><option value="medium">Medium</option><option value="high">High</option><option value="low">Low</option></select>' +
+    '<input type="date" id="todoQuickDue" style="max-width:150px;">' +
+    '<button class="btn btn-primary" onclick="quickAddTodo()">Add</button>' +
+    '</div></div>';
+
+  // Todo list
+  html += '<div class="card card-no-hover" style="padding:0;overflow:hidden;">';
+  html += '<div id="todoActiveList">';
+  if (active.length === 0 && completed.length === 0) {
+    html += '<p style="padding:var(--space-4);color:var(--muted-foreground);font-size:0.85rem;">No todos match the current filters.</p>';
+  }
+  active.forEach(t => html += renderTodoItem(t));
+  html += '</div>';
+
+  if (completed.length > 0) {
+    html += '<div class="todo-separator">Completed (' + completed.length + ')</div>';
+    html += '<div id="todoCompletedList">';
+    completed.forEach(t => html += renderTodoItem(t));
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderTodoItem(t) {
+  const isOverdue = !t.completed && t.dueDate && new Date(t.dueDate) < new Date(new Date().toDateString());
+  return '<div class="todo-item' + (t.completed ? ' completed' : '') + '" data-id="' + t.id + '" style="animation-delay:' + (Math.random() * 40) + 'ms;">' +
+    '<div class="drag-handle" aria-label="Drag to reorder"><i data-lucide="grip-vertical" width="14" height="14"></i></div>' +
+    '<div class="todo-checkbox' + (t.completed ? ' checked' : '') + '" onclick="toggleTodo(\'' + t.id + '\')" role="checkbox" aria-checked="' + t.completed + '" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleTodo(\'' + t.id + '\')}">' +
+    (t.completed ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : '') +
+    '</div>' +
+    '<span class="todo-text" onclick="inlineEditTodo(\'' + t.id + '\',this)" tabindex="0">' + escHtml(t.text) + '</span>' +
+    '<div class="todo-tags">' + (t.tags || []).map(tag => '<span class="badge ' + getTagClass(tag) + '">' + escHtml(tag) + '</span>').join('') + '</div>' +
+    '<div class="todo-meta">' +
+    '<div class="priority-dot priority-' + (t.priority || 'medium') + '" title="' + (t.priority || 'medium') + ' priority"></div>' +
+    (t.dueDate ? '<span class="due-chip' + (isOverdue ? ' overdue' : '') + '">' + formatDate(t.dueDate) + '</span>' : '') +
+    '<button class="btn-icon" onclick="openEditTodoModal(\'' + t.id + '\')" aria-label="Edit todo"><i data-lucide="more-horizontal" width="14" height="14"></i></button>' +
+    '</div></div>';
+}
+
+function filterPill(label, active, onclick, extraClass = '') {
+  return '<button class="filter-pill' + (active ? ' active' : '') + ' ' + extraClass + '" onclick="' + onclick + '">' + escHtml(label) + '</button>';
+}
+
+function resetFilters() { STATE.todoFilters = { tag: null, priority: null, status: null, due: null }; renderPage(); }
+function toggleTagFilter(tag) { STATE.todoFilters.tag = STATE.todoFilters.tag === tag ? null : tag; renderPage(); }
+function togglePriorityFilter(p) { STATE.todoFilters.priority = STATE.todoFilters.priority === p ? null : p; renderPage(); }
+function toggleStatusFilter(s) { STATE.todoFilters.status = STATE.todoFilters.status === s ? null : s; renderPage(); }
+function toggleDueFilter(d) { STATE.todoFilters.due = STATE.todoFilters.due === d ? null : d; renderPage(); }
+
+function quickAddTodo() {
+  const text = document.getElementById('todoQuickInput').value.trim();
+  if (!text) return;
+  const tagsRaw = document.getElementById('todoQuickTags').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const priority = document.getElementById('todoQuickPriority').value;
+  const dueDate = document.getElementById('todoQuickDue').value || null;
+
+  tags.forEach(t => getTagClass(t)); // assign colors
+
+  STATE.todos.unshift({
+    id: uuid(), text, completed: false, tags, priority, dueDate,
+    createdAt: new Date().toISOString(), completedAt: null, order: 0
+  });
+  saveTodos();
+  showToast('Todo added!', 'success');
+  renderPage();
+  setTimeout(() => { const i = document.getElementById('todoQuickInput'); if (i) i.focus(); }, 50);
+}
+
+function toggleTodo(id) {
+  const t = STATE.todos.find(x => x.id === id);
+  if (!t) return;
+  t.completed = !t.completed;
+  t.completedAt = t.completed ? new Date().toISOString() : null;
+  saveTodos();
+  renderPage();
+}
+
+function inlineEditTodo(id, el) {
+  const t = STATE.todos.find(x => x.id === id);
+  if (!t) return;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'todo-text-input';
+  input.value = t.text;
+  input.onblur = () => { t.text = input.value.trim() || t.text; saveTodos(); renderPage(); };
+  input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') { input.value = t.text; input.blur(); } };
+  el.replaceWith(input);
+  input.focus();
+}
+
+function openEditTodoModal(id) {
+  const t = STATE.todos.find(x => x.id === id);
+  if (!t) return;
+  openModal(
+    '<h2>Edit Todo</h2>' +
+    '<div class="form-group"><label>Text</label><input type="text" id="editTodoText" value="' + escAttr(t.text) + '"></div>' +
+    '<div class="form-group"><label>Tags (comma separated)</label><input type="text" id="editTodoTags" value="' + escAttr((t.tags || []).join(', ')) + '"></div>' +
+    '<div class="form-group"><label>Priority</label><select id="editTodoPriority"><option value="low"' + (t.priority === 'low' ? ' selected' : '') + '>Low</option><option value="medium"' + (t.priority === 'medium' ? ' selected' : '') + '>Medium</option><option value="high"' + (t.priority === 'high' ? ' selected' : '') + '>High</option></select></div>' +
+    '<div class="form-group"><label>Due Date</label><input type="date" id="editTodoDue" value="' + (t.dueDate || '') + '"></div>' +
+    '<div class="modal-actions">' +
+    '<button class="btn btn-destructive" onclick="deleteTodo(\'' + t.id + '\')">Delete</button>' +
+    '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" onclick="saveTodoEdit(\'' + t.id + '\')">Save</button></div>'
+  );
+}
+
+function saveTodoEdit(id) {
+  const t = STATE.todos.find(x => x.id === id);
+  if (!t) return;
+  t.text = document.getElementById('editTodoText').value.trim() || t.text;
+  const tags = document.getElementById('editTodoTags').value.split(',').map(s => s.trim()).filter(Boolean);
+  tags.forEach(tg => getTagClass(tg));
+  t.tags = tags;
+  t.priority = document.getElementById('editTodoPriority').value;
+  t.dueDate = document.getElementById('editTodoDue').value || null;
+  saveTodos();
+  closeModal();
+  showToast('Todo updated', 'success');
+  renderPage();
+}
+
+function deleteTodo(id) {
+  const removed = STATE.todos.find(t => t.id === id);
+  STATE.todos = STATE.todos.filter(t => t.id !== id);
+  saveTodos();
+  closeModal();
+  showToast('Todo deleted', 'error', Object.assign(() => { STATE.todos.push(removed); saveTodos(); renderPage(); }, { label: 'Undo' }));
+  renderPage();
+}
+
+function initTodoSortable() {
+  const el = document.getElementById('todoActiveList');
+  if (!el) return;
+  new Sortable(el, {
+    animation: 150,
+    handle: '.drag-handle',
+    ghostClass: 'sortable-ghost',
+    dragClass: 'sortable-drag',
+    onEnd: () => {
+      const ids = [...el.querySelectorAll('.todo-item')].map(e => e.dataset.id);
+      const reordered = [];
+      ids.forEach(id => { const t = STATE.todos.find(x => x.id === id); if (t) { t.completed = false; t.completedAt = null; reordered.push(t); } });
+      STATE.todos.forEach(t => { if (!ids.includes(t.id)) reordered.push(t); });
+      STATE.todos = reordered;
+      saveTodos();
+      renderPage();
+    }
+  });
+  const cel = document.getElementById('todoCompletedList');
+  if (cel) {
+    new Sortable(cel, { animation: 150, handle: '.drag-handle', ghostClass: 'sortable-ghost', dragClass: 'sortable-drag' });
+  }
+}
+
+/* ===== SETTINGS VIEW ===== */
+function renderSettings() {
+  const accentColors = ['#6D5ACD','#2563EB','#7C3AED','#059669','#E11D48','#D97706','#0891B2'];
+  return '<h2 style="font-size:1.25rem;margin-bottom:var(--space-6);">Settings</h2>' +
+    '<div class="settings-section"><h3>Appearance</h3>' +
+    '<div class="setting-row"><label>Dark Mode</label><div class="toggle' + (STATE.settings.theme === 'dark' ? ' on' : '') + '" onclick="toggleTheme()" role="switch" tabindex="0" aria-checked="' + (STATE.settings.theme === 'dark') + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleTheme()}"><div class="toggle-knob"></div></div></div>' +
+    '<div class="setting-row"><label>Accent Color</label><div class="color-swatches">' +
+    accentColors.map(c => '<div class="color-swatch' + (STATE.settings.accent === c ? ' active' : '') + '" style="background:' + c + ';" onclick="setAccent(\'' + c + '\')"></div>').join('') +
+    '</div></div></div>' +
+    '<div class="settings-section"><h3>Profile</h3>' +
+    '<div class="setting-row"><label>Username</label><input type="text" value="' + escAttr(STATE.settings.username) + '" id="settingsUsername" onchange="STATE.settings.username=this.value.trim()||\'User\';saveSettings();updateGreeting();updateAvatar();" style="max-width:200px;"></div></div>' +
+    '<div class="settings-section"><h3>Data Management</h3>' +
+    '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;">' +
+    '<button class="btn btn-secondary" onclick="exportData()"><i data-lucide="download" width="16" height="16"></i> Export JSON</button>' +
+    '<button class="btn btn-secondary" onclick="document.getElementById(\'importFile\').click()"><i data-lucide="upload" width="16" height="16"></i> Import JSON</button>' +
+    '<input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">' +
+    '<button class="btn btn-destructive" onclick="confirmReset()"><i data-lucide="trash-2" width="16" height="16"></i> Reset All Data</button>' +
+    '</div></div>';
+}
+
+function toggleTheme() {
+  STATE.settings.theme = STATE.settings.theme === 'dark' ? 'light' : 'dark';
+  saveSettings();
+  applyTheme();
+  renderPage();
+}
+
+function setAccent(color) {
+  STATE.settings.accent = color;
+  saveSettings();
+  applyTheme();
+  renderPage();
+}
+
+function updateAvatar() {
+  const el = document.getElementById('avatarEl');
+  const nameEl = document.getElementById('usernameDisplay');
+  if (el) el.textContent = (STATE.settings.username || 'U')[0].toUpperCase();
+  if (nameEl) nameEl.textContent = STATE.settings.username || 'User';
+}
+
+function exportData() {
+  const data = { links: STATE.links, todos: STATE.todos, tagColors: STATE.tagColors, settings: STATE.settings };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'dashboard-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Data exported!', 'success');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.links) { STATE.links = data.links; saveLinks(); }
+      if (data.todos) { STATE.todos = data.todos; saveTodos(); }
+      if (data.tagColors) { STATE.tagColors = data.tagColors; saveTagColors(); }
+      if (data.settings) { STATE.settings = { ...STATE.settings, ...data.settings }; saveSettings(); applyTheme(); updateGreeting(); updateAvatar(); }
+      showToast('Data imported!', 'success');
+      renderPage();
+    } catch { showToast('Invalid JSON file', 'error'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function confirmReset() {
+  openModal(
+    '<h2>Reset All Data</h2>' +
+    '<p style="color:var(--muted-foreground);margin-bottom:var(--space-4);">This will permanently delete all your links, todos, and settings. This cannot be undone.</p>' +
+    '<div class="modal-actions">' +
+    '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-destructive" onclick="resetAllData()">Reset Everything</button></div>'
+  );
+}
+
+function resetAllData() {
+  localStorage.removeItem('dashboard_links');
+  localStorage.removeItem('dashboard_todos');
+  localStorage.removeItem('dashboard_tag_colors');
+  localStorage.removeItem('dashboard_settings');
+  localStorage.removeItem('dashboard_sidebar_collapsed');
+  localStorage.removeItem('dashboard_collapsed_cats');
+  STATE.links = []; STATE.todos = []; STATE.tagColors = {};
+  STATE.settings = { theme: 'light', accent: '#6D5ACD', username: 'Seken' };
+  applyTheme(); updateGreeting(); updateAvatar();
+  closeModal();
+  showToast('All data has been reset', 'info');
+  renderPage();
+}
+
+/* ===== SIDEBAR ===== */
+function toggleSidebar() {
+  STATE.sidebarCollapsed = !STATE.sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed', STATE.sidebarCollapsed);
+  LS.set('dashboard_sidebar_collapsed', STATE.sidebarCollapsed);
+  const icon = document.querySelector('#sidebarToggle i');
+  if (icon) icon.setAttribute('data-lucide', STATE.sidebarCollapsed ? 'panel-left-open' : 'panel-left-close');
+  lucide.createIcons();
+}
+
+function toggleMobileSidebar(forceClose) {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('mobileOverlay');
+  const isOpen = sb.classList.contains('mobile-open');
+  if (forceClose === false || isOpen) {
+    sb.classList.remove('mobile-open');
+    ov.style.display = 'none';
+  } else {
+    sb.classList.add('mobile-open');
+    ov.style.display = 'block';
+  }
+}
+
+/* ===== UTILITY ===== */
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function escAttr(s) { return (s || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function formatDate(d) {
+  if (!d) return '';
+  const date = new Date(d + 'T00:00:00');
+  const now = new Date();
+  const diff = Math.round((date - new Date(now.toDateString())) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Tomorrow';
+  if (diff === -1) return 'Yesterday';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/* ===== KEYBOARD SHORTCUTS ===== */
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key === 'l') { e.preventDefault(); openAddLinkModal(); }
+  if (mod && e.key === 'k') { e.preventDefault(); navigateTo('todos'); setTimeout(() => { const i = document.getElementById('todoQuickInput'); if (i) i.focus(); }, 100); }
+});
+
+/* ===== EVENT DELEGATION ===== */
+document.addEventListener('click', (e) => {
+  const navItem = e.target.closest('.nav-item');
+  if (navItem && navItem.dataset.page) navigateTo(navItem.dataset.page);
+});
+
+/* ===== INIT ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  applyTheme();
+  updateGreeting();
+  updateDateTime();
+  updateAvatar();
+
+  if (STATE.sidebarCollapsed) {
+    document.getElementById('sidebar').classList.add('collapsed');
+    const icon = document.querySelector('#sidebarToggle i');
+    if (icon) icon.setAttribute('data-lucide', 'panel-left-open');
+  }
+
+  document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+  document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+  document.getElementById('quickAddBtn').addEventListener('click', showQuickAddMenu);
+
+  // Hash routing
+  const hash = window.location.hash.replace('#', '') || 'dashboard';
+  if (['dashboard','links','todos','settings'].includes(hash)) navigateTo(hash);
+  else navigateTo('dashboard');
+
+  setInterval(updateDateTime, 10000);
+  setInterval(updateGreeting, 60000);
+
+  lucide.createIcons();
+});
+</script>
+</body>
+</html>
